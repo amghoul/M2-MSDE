@@ -66,6 +66,7 @@
  ┣ 📜args_file.py --> This file contains the arguments or parameters that required to run the code
  ┣ 📜finetune_2012.sh --> script to finetune the pretrained model on KITTI 2012
  ┣ 📜finetune_2015.sh --> script to finetune the pretrained model on KITTI 2015
+ ┣ 📜dataclasses_models.py --> contains the dataclasses models
  ┣ 📜main_file.py --> main file code which called from args_file.py
  ┣ 📜README.md
  ┣ 📜resume.sh --> script to resume training
@@ -145,7 +146,7 @@
         - datatype: {2012, 2015} to select kitti version 2012 or 2015
         - flip_vertical: {0,1} This for KITII dataset to enable flipping the image up-down for 1 or no flipping
     - stages: --> {1,2,3,4} Number of stages
-    - model: --> {org, cf_fact3d, cf_sepconv}  to select the model to run it. org: original model, cf_fact3d: SSDE model (ourmodel), cf_sepconv: eperable conolution model (not used)
+    - model: --> {org, cf_fact3d, cf_sepconv}  to select the model to run it. org: original model, cf_fact3d: MSDE model (ourmodel), cf_sepconv: eperable conolution model (not used)
     - mode: {train,finetune,test} To select mode of running
     - epochs: Number of epochs
     - lr: Learning rate vfalue {0.001}
@@ -166,7 +167,7 @@
     - ### for resuming
         - resume: {0,1} --> 0: no resuming, 1: enable resuming
         - resumeFile: {None, /kitti_model_cf_fact3d_3stages/checkpoints/- cf_fact3d_fin_kitti-2015-2020_12_19-16_03_29-epoch-2-loss2-10.031-lossesSum-31.297.pth} --> The path of the resume file if enable resume
-    - #### for SSDE model=cf_fact3d (our model)
+    - #### for MSDE model=cf_fact3d (our model)
         - model_bn:{0,1} --> for enabling Batch Normalized (BN) layers in whole the model or not. 1: enable BN according to the BN_1D_last or (BN_1D and BN_2D) values. 0: disable BN regardless of BN_1D_last,BN_1D and BN_2D values.
         -BN_1D_last: {0,1} --> enforcing BN for the last conv1D in factorized conv3d layers regardless of BN_1D and BN_2D values. 0: use BN_1D and BN_2D values for BN
         - BN_1D: {0,1} --> 0: don't use batch normalized with Conv1D layer in factorizing, 1: use batch normalized with Conv1D layer in factorizing
@@ -179,14 +180,14 @@
 ## <a name= run>How to run the code</a>
 
 ### <a name= train>Training the model</a>
-- To train the model from scratch using FT3D run "run.sh" script
+- To train the model from scratch using FT3D run '.\train_scripts\run-tr55-chout-32-sf4-subpixel1-skip.sh' script
 - Note: refer to the [Main parameters to run the code](#args) for more help
 ---
 
 ### <a name= finetune>Finetuning the model</a>
-- To finetune the model using A pretrained model you can run the script:
-    - finetune_2012_V18.sh --> to finetune on KITTI 2012
-    - finetune_2015_V18.sh --> to finetune on KITTI 2015
+- To finetune the model using A pretrained model you can run the script inside 'fin_Scripts' folder:
+    - '.\run-tr55-kitti2012.sh' --> to finetune on KITTI 2012
+    - 'fin_scripts\run-tr55-kitti2015.sh' --> to finetune on KITTI 2015
 - Note: refer to the [Main parameters to run the code](#args) for more help
 ---
 
@@ -196,7 +197,7 @@
 ---
 
 ### <a name= test>Testing the model</a>
-- To test the model you can run the following script:
-    - test_V18.sh --> test the model on FT3D dataset
-    - test_kitti_2015.sh --> test the model on KITTI 2015 dataset
-    - test_kitti_2012.sh --> test the model on KITTI 2012 dataset
+- To test the model you can run the following script from 'test_scripts' folder:
+    - 'test_scripts\test-tr55.sh' --> test the model on FT3D dataset
+    - 'test_scripts\test-tr55-kitti2012.sh' --> test the model on KITTI 2012 dataset
+    - 'test_scripts\test-tr55-kitti2015.sh' --> test the model on KITTI 2015 dataset
