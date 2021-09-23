@@ -1,0 +1,15 @@
+torchsummary==1.5.1
+apex==0.1
+matplotlib==3.2.2
+ninja==1.10.0.post2
+numpy==1.19.0
+opencv-python==4.2.0.34
+pandas==1.1.0
+Pillow==4.1.1
+pytorch-memlab==0.2.1
+pytorch-nemo==0.0.7
+qtorch==0.2.0
+termcolor==1.1.0
+texttable==1.6.3
+torchaudio==0.6.0
+torchprof==1.1.1
