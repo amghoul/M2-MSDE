@@ -6,7 +6,7 @@ import torch.utils.data
 from collections import defaultdict
 from .utils import *
 from .disp_to_color import *
-
+import time
 
 
 def test(args,dataloader, model, test_results_path,log,valid_file_results):
@@ -106,6 +106,21 @@ def test(args,dataloader, model, test_results_path,log,valid_file_results):
                 for x in range(stages):
                     Outliers_rate[x]=0
                 with torch.no_grad():
+                    '''
+                    total_time = 0.0
+                    for i in range(10):
+                        outputs = model(imgL, imgR)
+                    for i in range(300):
+                        torch.cuda.synchronize()
+                        starter_ft= time.perf_counter()
+                        outputs = model(imgL, imgR)
+                        torch.cuda.synchronize()
+                        ender_ft= time.perf_counter()
+                        total_time = total_time + (ender_ft-starter_ft)
+                        print("time in ", str(i),": ", str(ender_ft-starter_ft))
+                    print("average time: ", str(total_time/300))
+                    exit()
+                    '''
                     outputs = model(imgL, imgR)
                     for x in range(stages):
                         if len(disp_L[mask]) == 0:
@@ -169,7 +184,9 @@ def test(args,dataloader, model, test_results_path,log,valid_file_results):
             if args.dataset == "kitti":
                 save_images(outputs,disp_L,left_path,right_path,batch_idx,ABS_THRESH,args,test_results_path)
             else:
-                if batch_idx == 0 or batch_idx == 10 or batch_idx == 50 or batch_idx == 100 or batch_idx == 150:
+                if batch_idx == 0 or batch_idx == 10 or batch_idx == 50 or batch_idx == 100 or batch_idx == 150 or \
+                    batch_idx == 160 or batch_idx == 180 or batch_idx == 200 or batch_idx == 220 or batch_idx == 240 or \
+                    batch_idx == 260 or batch_idx == 280 or batch_idx == 300 or batch_idx == 320 or batch_idx == 340:
                     save_images(outputs,disp_L,left_path,right_path,batch_idx,ABS_THRESH,args,test_results_path)
             '''
             #save images

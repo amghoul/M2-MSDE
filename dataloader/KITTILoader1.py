@@ -72,8 +72,8 @@ class myImageFloder(data.Dataset):
             if self.flip_vertical == 1 and probability > 0.5:
                 left_img = left_img.flip(-2)
                 right_img = right_img.flip(-2)
-                dataL = np.flip(dataL, -2)
-                dataL_noc = np.flip(dataL_noc, -2)
+                dataL = np.flip(dataL, -2).copy()
+                dataL_noc = np.flip(dataL_noc, -2).copy()
 
             temp_tensor = torch.empty(1, 1)
             return left_img, right_img, dataL,dataL_noc,temp_tensor,left_path,right_path
@@ -98,8 +98,8 @@ class myImageFloder(data.Dataset):
             if self.flip_vertical == 1 and probability > 0.5:
                 left_img = left_img.flip(-2)
                 right_img = right_img.flip(-2)
-                dataL = np.flip(dataL, -2)
-                dataL_noc = np.flip(dataL_noc, -2)
+                dataL = np.flip(dataL, -2).copy()
+                dataL_noc = np.flip(dataL_noc, -2).copy()
 
             temp_tensor = torch.empty(1, 1)
             return left_img, right_img, dataL,dataL_noc,temp_tensor , left_path,right_path

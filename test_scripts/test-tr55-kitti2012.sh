@@ -1,33 +1,33 @@
 # -*- coding: UTF-8 -*-
 stages=3
-dataset=sceneflow # kitti   sceneflow
+dataset=kitti # kitti   sceneflow
 model=cf_fact3d # org cf_sepconv  cf_fact3d
-mode=train # train   finetune    test
-datapath=/ds-av/public_datasets/freiburg_sceneflow_subset/raw # /netscratch/alghoul/code/novel-stereonet-v01/FlyingThings3D
-datatype=2015
+mode=test # train   finetune    test
+datapath=/ds-av/public_datasets/kitti2012/raw/training #/ds-av/public_datasets/freiburg_sceneflow_subset/raw
+datatype=2012
 load_numpy=0
-flip_vertical=1
-epochs=600
+flip_vertical=0
+epochs=2000
 lr=0.001
-ch_lr_after=20 # FT3d = 20, kitti=200
-stepsize=10 # FT3d=10, kitti=50
+ch_lr_after=200 # FT3d = 20, kitti=200
+stepsize=50 # FT3d=10, kitti=50
 train_bsize=8 #10
-test_bsize=8 #4
-save_path=results/tr55-chout-32-sf4-subpixel1-skip
-print_freq=50
-checkpoint_save_thr=20
+test_bsize=1 #4
+save_path=finetune_results/tr55
+print_freq=1
+checkpoint_save_thr=50
 abs_thr=3
 ####load pretrained model
-loadmodel=None #/pretrainedModels/org_2Stages_finetune_kitti2015-2020_10_19-21_44_15-epoch-1908-loss1-0.52-lossesSum-1.17-EarlyStopping-stereonet.pth
+loadmodel=None #/pretrainedModels/best-tr55-epoch_282.pth #None #/pretrainedModels/org_2Stages_finetune_kitti2015-2020_10_19-21_44_15-epoch-1908-loss1-0.52-lossesSum-1.17-EarlyStopping-stereonet.pth
 #### quantization
 with_quant=0
 quantWL=16 #10
 quantFL=8 #8
 ####for testing
-testFile=None #/checkpoint_finetune_kitti2015-2020_12_04-21_28_07-epoch-4000-loss1-0.317-lossesSum-4.391.pth
+testFile=/kitti_2012_model_cf_fact3d_3stages/checkpoints/best_checkpoints/best-tr55_kitti2012-gerf_epoch_3318.pth #None #/checkpoint_finetune_kitti2015-2020_12_04-21_28_07-epoch-4000-loss1-0.317-lossesSum-4.391.pth
 ### for resuming
-resume=1 # resume path
-resumeFile=/sceneflow_model_cf_fact3d_3stages/checkpoints/cf_fact3d_fin_sceneflow-2015-2021_10_01-16_42_27-epoch-300-loss2-1.17-lossesSum-3.96.pth
+resume=0 # resume path
+resumeFile=None #/sceneflow_model_cf_fact3d_3stages/checkpoints/best_checkpoints/checkpoint-epoch_20-sumlosses_5.7998.pth
 ####for model=cf_fact3d
 model_bn=1
 BN_1D_last=1

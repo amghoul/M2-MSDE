@@ -175,7 +175,7 @@ def main(args):
     temp_minValErr=float('inf')
     temp_minTrErr=float('inf')
     
-    minLoss = {'loss0':float('inf'),'loss1':float('inf'),'loss2':float('inf'),'loss3':float('inf'),'sum_losses_stages':float('inf'),'test_sum_losses_stages':float('inf'),'checkpointPath':'none', 'epoch':1}
+    minLoss = {'loss0':float('inf'),'loss1':float('inf'),'loss2':float('inf'),'loss3':float('inf'),'sum_losses_stages':float('inf'),'checkpointPath':'none', 'epoch':1}
     
     timestr1, path_file_losses, path_file_GL,log,root_path,checkpoints_path,logs_path,test_results_path,valid_file_results = inialize_log_file(args)
 
@@ -271,6 +271,19 @@ def main(args):
                     #scheduler.step()
                     #log.info("*********The_learning_rate is: {:.12f} ".format(optimizer.param_groups[0]['lr']))
 
+                savefilename = checkpoints_path + '/' + checkName
+                minLoss = save_best_lossess(args,return_avg_losses,return_sum_stages_losses,return_avg_epes,return_sum_stages_epes,minLoss,epoch,savefilename,model,optimizer,scheduler,best_checkpoints,check_train_overfit) 
+
+                if epoch % args.checkpoint_save_thr == 0: # 100
+                    print(savefilename)
+                    save_chckpoint(args,model,return_avg_losses,return_avg_epes,epoch,optimizer,scheduler,minLoss,savefilename,best_checkpoints)
+
+                # check if reached overfit or steady state
+                reach_overfit_or_steadystate(args, prev_sum_stages_losses, return_sum_stages_losses,epoch,check_train_overfit,check_train_steadystate)
+
+                prev_return_avg_losses = return_avg_losses[:]
+                prev_sum_stages_losses = return_sum_stages_losses
+
                 ##### validation for each epoch
                 log.info('##### validation for epoch '+ str(epoch)+ '#####')
                 epoch_test_start_time= time.time()
@@ -287,22 +300,10 @@ def main(args):
                 test_train_outliers_sumary2[epoch]= return_outliers_sumary2
                 test_train_outliers_sumary3[epoch]= return_outliers_sumary3
                 ### saving losses
+                
                 save_losses(mask_names,optimizer,path_file_losses, epoch,stages,losses_All_Stages,epes_All_Stages,test_train_losses,test_train_EPEs,losses_sum_All_Stages,epes_sum_All_Stages,
                     test_train_sum_stages_losses,test_train_outliers_sumary1,test_train_outliers_sumary2,test_train_outliers_sumary3,epoch_train_end_time,epoch_train_start_time,epoch_test_end_time,epoch_test_start_time,scheduler)  
                 
-                #################
-                savefilename = checkpoints_path + '/' + checkName
-                minLoss = save_best_lossess(args,return_avg_losses,return_sum_stages_losses,return_avg_epes,return_sum_stages_epes,return_test_sum_stages_losses[0],minLoss,epoch,savefilename,model,optimizer,scheduler,best_checkpoints,check_train_overfit) 
-
-                if epoch % args.checkpoint_save_thr == 0: # 100
-                    print(savefilename)
-                    save_chckpoint(args,model,return_avg_losses,return_avg_epes,epoch,optimizer,scheduler,minLoss,savefilename,best_checkpoints)
-
-                # check if reached overfit or steady state
-                reach_overfit_or_steadystate(args, prev_sum_stages_losses, return_sum_stages_losses,epoch,check_train_overfit,check_train_steadystate)
-
-                prev_return_avg_losses = return_avg_losses[:]
-                prev_sum_stages_losses = return_sum_stages_losses
                 ############### calculate the generalaization training and testing error
                 sumErrTr +=losses_sum_All_Stages[epoch]
                 sumErrVal += test_train_sum_stages_losses[ epoch][0]
@@ -394,7 +395,6 @@ def main(args):
                     t_epoch,sum( t_avg_train_loss_stages[x] for x in range(len(t_avg_train_loss_stages))), current_lr))
             info_str3 = ', '.join(['Stage{} {:.3f}'.format(x, temp_best_losses_stages['loss'+str(x)]) for x in range(stages)])
             log.info('The best loss is for epoch' +  str(temp_best_losses_stages['epoch']) +' with losses: '+ info_str3)
-            log.info('The sum of validation losses of this best checkpoint is: {:.5f}'.format(temp_best_losses_stages['test_sum_losses_stages'])) 
             log.info("*************** Saved Args in Checkpoint **************")
             log.info("The saved args in checkpoint are:")
             for key, value in sorted(vars(saved_args).items()):

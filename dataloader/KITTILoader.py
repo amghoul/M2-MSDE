@@ -78,11 +78,11 @@ class myImageFloder(data.Dataset):
             if self.flip_vertical == 1 and probability > 0.5:
                 left_img = left_img.flip(-2)
                 right_img = right_img.flip(-2)
-                dataL = np.flip(dataL, -2)
+                dataL = np.flip(dataL, -2).copy()
                 #dataL = np.flipud(dataL).copy()
-                dataL_noc = np.flip(dataL_noc, -2)
+                dataL_noc = np.flip(dataL_noc, -2).copy()
                 #dataL_noc = np.flipud(dataL_noc).copy()
-                mask_obj_map_img = np.flip(mask_obj_map_img, -2)
+                mask_obj_map_img = np.flip(mask_obj_map_img, -2).copy()
                 #mask_obj_map_img = np.flipud(mask_obj_map_img).copy()
 
             return left_img, right_img, dataL,dataL_noc,mask_obj_map_img,left_path,right_path
@@ -110,9 +110,9 @@ class myImageFloder(data.Dataset):
             if self.flip_vertical == 1 and probability > 0.5:
                 left_img = left_img.flip(-2)
                 right_img = right_img.flip(-2)
-                dataL = np.flip(dataL, -2)
-                dataL_noc = np.flip(dataL_noc, -2)
-                mask_obj_map_img = np.flip(mask_obj_map_img, -2)
+                dataL = np.flip(dataL, -2).copy()
+                dataL_noc = np.flip(dataL_noc, -2).copy()
+                mask_obj_map_img = np.flip(mask_obj_map_img, -2).copy()
 
             return left_img, right_img, dataL,dataL_noc, mask_obj_map_img,left_path,right_path
 

@@ -3,7 +3,7 @@ import torch.nn.functional as F
 ## assume stream =1 and last layer is conv1d   
 
 class SpatioTemporalConv(nn.Module):
-    def __init__(self, stream,ch_in,ch_out,model_bn,islastBlock=False, BN_1D=1, BN_2D=0,BN_1D_last=1, bias=False): 
+    def __init__(self, stream,ch_in,ch_out,model_bn,islastBlock=False, BN_1D=1, BN_2D=0,BN_1D_last=1, is_deConv=0, bias=False): 
         #BN_1D BN_2D values: 1 or 0 i.e: use BN with conv2D or Conv1D
         #BN_1D_last {1,0} --> 1: use BN in the last layer only regardless of the BN_1D and BN_2D values. 0: use the BN_1D and BN_2D values 
         super().__init__()
@@ -13,6 +13,7 @@ class SpatioTemporalConv(nn.Module):
         stream_paddings=[]
         stream_strides=[]
         stream_layers=[]
+        self.is_deConv = is_deConv
         for j in range( len(stream.kernels)):
             stream_kernel_sizes.append(stream.kernels[j])
             stream_out_chs.append(stream.filters[j])
@@ -28,8 +29,12 @@ class SpatioTemporalConv(nn.Module):
                     for subs in range(len(stream.kernels)):
                         if subs == 0 or subs ==len(stream.kernels)-1 : # first or last conv
                             if subs == 0: # first conv
-                                self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(ch_in, stream_out_chs[subs], stream_kernel_sizes[subs], 
-                                                                stream_strides[subs], stream_paddings[subs]))
+                                if self.is_deConv == 0:
+                                    self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(ch_in, stream_out_chs[subs], stream_kernel_sizes[subs], 
+                                                                    stream_strides[subs], stream_paddings[subs]))
+                                else:
+                                    self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.ConvTranspose3d(ch_in, stream_out_chs[subs], stream_kernel_sizes[subs], 
+                                                                    stream_strides[subs], stream_paddings[subs]))
                                 if stream_layers[subs]=="conv1d":
                                     if BN_1D ==1:
                                         self.spat_temp_conv.add_module('BN_subs'+str(subs), nn.BatchNorm3d(stream_out_chs[subs]))
@@ -39,8 +44,12 @@ class SpatioTemporalConv(nn.Module):
                                 #self.spat_temp_conv.add_module('LeakyReLU_subs'+str(subs), nn.LeakyReLU(negative_slope=0.2, inplace=True))
                                 
                             else: # last conv1d
-                                self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(stream_out_chs[subs-1], ch_out, stream_kernel_sizes[subs], 
-                                                                stream_strides[subs], stream_paddings[subs]))
+                                if self.is_deConv == 0:
+                                    self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(stream_out_chs[subs-1], ch_out, stream_kernel_sizes[subs], 
+                                                                    stream_strides[subs], stream_paddings[subs]))
+                                else:
+                                    self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.ConvTranspose3d(stream_out_chs[subs-1], ch_out, stream_kernel_sizes[subs], 
+                                                                    stream_strides[subs], stream_paddings[subs]))
                                 if stream_layers[subs]=="conv1d":
                                     if BN_1D ==1:
                                         self.spat_temp_conv.add_module('BN_subs'+str(subs),nn.BatchNorm3d(ch_out))
@@ -50,8 +59,12 @@ class SpatioTemporalConv(nn.Module):
                                 self.spat_temp_conv.add_module('LeakyReLU_subs'+str(subs), nn.LeakyReLU(negative_slope=0.2, inplace=True))
                         
                         else: # middle conv
-                            self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(stream_out_chs[subs-1], stream_out_chs[subs], stream_kernel_sizes[subs], 
-                                                            stream_strides[subs], stream_paddings[subs]))
+                            if self.is_deConv == 0:
+                                self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(stream_out_chs[subs-1], stream_out_chs[subs], stream_kernel_sizes[subs], 
+                                                                stream_strides[subs], stream_paddings[subs]))
+                            else:
+                                self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.ConvTranspose3d(stream_out_chs[subs-1], stream_out_chs[subs], stream_kernel_sizes[subs], 
+                                                                stream_strides[subs], stream_paddings[subs]))
                             if stream_layers[subs]=="conv1d":
                                 if BN_1D ==1:
                                     self.spat_temp_conv.add_module('BN_subs'+str(subs),nn.BatchNorm3d(stream_out_chs[subs]))
@@ -64,12 +77,20 @@ class SpatioTemporalConv(nn.Module):
                     for subs in range(len(stream.kernels)):
                         if subs == 0 or subs ==len(stream.kernels)-1 : # first or last conv
                             if subs == 0: # first conv
-                                self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(ch_in, stream_out_chs[subs], stream_kernel_sizes[subs], 
-                                                                stream_strides[subs], stream_paddings[subs]))
+                                if self.is_deConv == 0:
+                                    self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(ch_in, stream_out_chs[subs], stream_kernel_sizes[subs], 
+                                                                    stream_strides[subs], stream_paddings[subs]))
+                                else:
+                                    self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.ConvTranspose3d(ch_in, stream_out_chs[subs], stream_kernel_sizes[subs], 
+                                                                    stream_strides[subs], stream_paddings[subs]))                                
                                 #self.spat_temp_conv.add_module('LeakyReLU_subs'+str(subs), nn.LeakyReLU(negative_slope=0.2, inplace=True))
                             else: # last conv1d
-                                self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(stream_out_chs[subs-1], ch_out, stream_kernel_sizes[subs], 
-                                                                stream_strides[subs], stream_paddings[subs]))
+                                if self.is_deConv == 0:
+                                    self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(stream_out_chs[subs-1], ch_out, stream_kernel_sizes[subs], 
+                                                                    stream_strides[subs], stream_paddings[subs]))
+                                else:
+                                    self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.ConvTranspose3d(stream_out_chs[subs-1], ch_out, stream_kernel_sizes[subs], 
+                                                                    stream_strides[subs], stream_paddings[subs]))
                                 if stream_layers[subs]=="conv1d":
                                     self.spat_temp_conv.add_module('BN_subs'+str(subs),nn.BatchNorm3d(ch_out))
                                 else:
@@ -77,40 +98,68 @@ class SpatioTemporalConv(nn.Module):
                                 self.spat_temp_conv.add_module('LeakyReLU_subs'+str(subs), nn.LeakyReLU(negative_slope=0.2, inplace=True))
                         
                         else: # middle conv
-                            self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(stream_out_chs[subs-1], stream_out_chs[subs], stream_kernel_sizes[subs], 
-                                                            stream_strides[subs], stream_paddings[subs]))                         
+                            if self.is_deConv == 0:
+                                self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(stream_out_chs[subs-1], stream_out_chs[subs], stream_kernel_sizes[subs], 
+                                                                stream_strides[subs], stream_paddings[subs])) 
+                            else:
+                                self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.ConvTranspose3d(stream_out_chs[subs-1], stream_out_chs[subs], stream_kernel_sizes[subs], 
+                                                                stream_strides[subs], stream_paddings[subs]))                    
                             #self.spat_temp_conv.add_module('LeakyReLU_subs'+str(subs), nn.LeakyReLU(negative_slope=0.2, inplace=True))
             else: # model_bn == 0
                 for subs in range(len(stream.kernels)):
                     if subs == 0 or subs ==len(stream.kernels)-1 : # first or last conv
                         if subs == 0: # fisrt conv
-                            self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(ch_in, stream_out_chs[subs], stream_kernel_sizes[subs], 
-                                                            stream_strides[subs], stream_paddings[subs]))
+                            if self.is_deConv == 0:
+                                self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(ch_in, stream_out_chs[subs], stream_kernel_sizes[subs], 
+                                                                stream_strides[subs], stream_paddings[subs]))
+                            else:
+                                self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.ConvTranspose3d(ch_in, stream_out_chs[subs], stream_kernel_sizes[subs], 
+                                                                stream_strides[subs], stream_paddings[subs]))
                             #self.spat_temp_conv.add_module('LeakyReLU_subs'+str(subs), nn.LeakyReLU(negative_slope=0.2, inplace=True))
                         else: # last conv
-                            self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(stream_out_chs[subs-1], ch_out, stream_kernel_sizes[subs], 
-                                                            stream_strides[subs], stream_paddings[subs]))
+                            if self.is_deConv == 0:
+                                self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(stream_out_chs[subs-1], ch_out, stream_kernel_sizes[subs], 
+                                                                stream_strides[subs], stream_paddings[subs]))
+                            else:
+                                self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.ConvTranspose3d(stream_out_chs[subs-1], ch_out, stream_kernel_sizes[subs], 
+                                                            stream_strides[subs], stream_paddings[subs]))                                    
                             self.spat_temp_conv.add_module('LeakyReLU_subs'+str(subs), nn.LeakyReLU(negative_slope=0.2, inplace=True))
                     
                     else: # middle conv
-                        self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(stream_out_chs[subs-1], stream_out_chs[subs], stream_kernel_sizes[subs], 
-                                                        stream_strides[subs], stream_paddings[subs]))
+                        if self.is_deConv == 0:
+                            self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(stream_out_chs[subs-1], stream_out_chs[subs], stream_kernel_sizes[subs], 
+                                                            stream_strides[subs], stream_paddings[subs]))
+                        else:
+                                self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.ConvTranspose3d(stream_out_chs[subs-1], stream_out_chs[subs], stream_kernel_sizes[subs], 
+                                                            stream_strides[subs], stream_paddings[subs]))
                         #self.spat_temp_conv.add_module('LeakyReLU_subs'+str(subs), nn.LeakyReLU(negative_slope=0.2, inplace=True))
         else:   # lastBlock_WithBN ==0 No BN with last block
             for subs in range(len(stream.kernels)):
                 if subs == 0 or subs ==len(stream.kernels)-1 : # first or last conv
                     if subs == 0: # fisrt conv2d
-                        self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(ch_in, stream_out_chs[subs], stream_kernel_sizes[subs], 
+                        if self.is_deConv == 0:
+                            self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(ch_in, stream_out_chs[subs], stream_kernel_sizes[subs], 
+                                                            stream_strides[subs], stream_paddings[subs]))
+                        else:
+                            self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.ConvTranspose3d(ch_in, stream_out_chs[subs], stream_kernel_sizes[subs], 
                                                         stream_strides[subs], stream_paddings[subs]))
                         #self.spat_temp_conv.add_module('LeakyReLU_subs'+str(subs), nn.LeakyReLU(negative_slope=0.2, inplace=True))
 
                     else: # last conv
-                        self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(stream_out_chs[subs-1], ch_out, stream_kernel_sizes[subs], 
+                        if self.is_deConv == 0:
+                            self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(stream_out_chs[subs-1], ch_out, stream_kernel_sizes[subs], 
+                                                            stream_strides[subs], stream_paddings[subs]))
+                        else:
+                            self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.ConvTranspose3d(stream_out_chs[subs-1], ch_out, stream_kernel_sizes[subs], 
                                                         stream_strides[subs], stream_paddings[subs]))
                         self.spat_temp_conv.add_module('LeakyReLU_subs'+str(subs), nn.LeakyReLU(negative_slope=0.2, inplace=True))
                 
                 else: # middle conv
-                    self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(stream_out_chs[subs-1], stream_out_chs[subs], stream_kernel_sizes[subs], 
+                    if self.is_deConv == 0:
+                        self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.Conv3d(stream_out_chs[subs-1], stream_out_chs[subs], stream_kernel_sizes[subs], 
+                                                        stream_strides[subs], stream_paddings[subs]))
+                    else:
+                        self.spat_temp_conv.add_module(stream_layers[subs]+'_subs'+str(subs), nn.ConvTranspose3d(stream_out_chs[subs-1], stream_out_chs[subs], stream_kernel_sizes[subs], 
                                                     stream_strides[subs], stream_paddings[subs]))
                     #self.spat_temp_conv.add_module('LeakyReLU_subs'+str(subs), nn.LeakyReLU(negative_slope=0.2, inplace=True))                                 
 

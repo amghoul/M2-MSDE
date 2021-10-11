@@ -25,7 +25,7 @@ def dataloader(filepath):
 
   train = image[:158]
   #print('######################', train )
-  val   = image[:]#[158:]
+  val   = image[158:]#[158:]
 
   left_train  = [filepath+left_fold+img for img in train]
   right_train = [filepath+right_fold+img for img in train]
